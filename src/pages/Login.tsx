@@ -16,6 +16,14 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+
+  React.useEffect(() => {
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+  }, []);
 
   React.useEffect(() => {
     if (user) {
@@ -32,6 +40,11 @@ const Login: React.FC = () => {
         toast.success('Account created successfully!');
       } else {
         await login({ email, password });
+        if (rememberMe) {
+          localStorage.setItem('rememberedEmail', email);
+        } else {
+          localStorage.removeItem('rememberedEmail');
+        }
         toast.success('Logged in successfully!');
       }
     } catch (error: any) {
@@ -108,10 +121,22 @@ const Login: React.FC = () => {
               />
             </div>
 
+            <div className="flex items-center justify-between px-2">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                />
+                <span className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors">Remember me</span>
+              </label>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
                 <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -127,7 +152,7 @@ const Login: React.FC = () => {
           <div className="mt-10 text-center">
             <button 
               onClick={() => setIsRegister(!isRegister)}
-              className="text-indigo-600 font-bold hover:underline"
+              className="text-indigo-600 font-bold hover:underline cursor-pointer"
             >
               {isRegister ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
             </button>

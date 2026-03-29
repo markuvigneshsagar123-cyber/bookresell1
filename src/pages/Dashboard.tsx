@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { api } from '../api';
-import { Book, ShoppingBag, Settings, User as UserIcon, Package, Clock, CheckCircle, XCircle, Database } from 'lucide-react';
+import { Book, ShoppingBag, Settings, User as UserIcon, Package, Clock, CheckCircle, XCircle, Database, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -11,7 +11,7 @@ const Dashboard: React.FC = () => {
   const [myBooks, setMyBooks] = useState<any[]>([]);
   const [sentRequests, setSentRequests] = useState<any[]>([]);
   const [receivedRequests, setReceivedRequests] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'listings' | 'sent' | 'received' | 'profile'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'sent' | 'received' | 'profile' | 'messages'>('listings');
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -159,28 +159,35 @@ const Dashboard: React.FC = () => {
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
             <button 
               onClick={() => setActiveTab('listings')}
-              className={`w-full flex items-center gap-3 px-6 py-4 text-left font-bold transition-colors ${activeTab === 'listings' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              className={`w-full flex items-center gap-3 px-6 py-4 text-left font-bold transition-colors cursor-pointer ${activeTab === 'listings' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
             >
               <Book className="w-5 h-5" />
               My Listings ({myBooks.length})
             </button>
             <button 
               onClick={() => setActiveTab('sent')}
-              className={`w-full flex items-center gap-3 px-6 py-4 text-left font-bold transition-colors ${activeTab === 'sent' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              className={`w-full flex items-center gap-3 px-6 py-4 text-left font-bold transition-colors cursor-pointer ${activeTab === 'sent' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
             >
               <ShoppingBag className="w-5 h-5" />
               My Requests ({sentRequests.length})
             </button>
             <button 
               onClick={() => setActiveTab('received')}
-              className={`w-full flex items-center gap-3 px-6 py-4 text-left font-bold transition-colors ${activeTab === 'received' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              className={`w-full flex items-center gap-3 px-6 py-4 text-left font-bold transition-colors cursor-pointer ${activeTab === 'received' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
             >
               <Package className="w-5 h-5" />
               Requests Received ({receivedRequests.length})
             </button>
             <button 
+              onClick={() => setActiveTab('messages')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer ${activeTab === 'messages' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-gray-500 hover:bg-gray-100'}`}
+            >
+              <MessageSquare className="w-5 h-5" />
+              Messages
+            </button>
+            <button 
               onClick={() => setActiveTab('profile')}
-              className={`w-full flex items-center gap-3 px-6 py-4 text-left font-bold transition-colors ${activeTab === 'profile' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              className={`w-full flex items-center gap-3 px-6 py-4 text-left font-bold transition-colors cursor-pointer ${activeTab === 'profile' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
             >
               <Settings className="w-5 h-5" />
               Profile Settings
@@ -299,6 +306,46 @@ const Dashboard: React.FC = () => {
                     <Link to="/browse" className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors">
                       Start Shopping
                     </Link>
+                  </div>
+                )
+              ) : activeTab === 'messages' ? (
+                [...sentRequests, ...receivedRequests].length > 0 ? (
+                  <div className="space-y-4">
+                    {[...sentRequests, ...receivedRequests]
+                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                      .map(order => {
+                        const isSeller = user?.id === order.sellerId;
+                        const otherPartyName = isSeller ? order.buyerName : (order.sellerName || 'Seller');
+                        return (
+                          <Link key={order.id} to={`/order/${order.id}`} className="block group">
+                            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm group-hover:shadow-md transition-all flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg">
+                                  {otherPartyName?.[0] || 'U'}
+                                </div>
+                                <div>
+                                  <h4 className="font-bold text-gray-900">Chat with {otherPartyName}</h4>
+                                  <p className="text-sm text-gray-500 truncate max-w-[200px] md:max-w-md">
+                                    Re: {order.bookTitle}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs text-gray-400 mb-1">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                <span className={`text-xs font-bold px-2 py-1 rounded-lg ${order.status === 'Approved' ? 'bg-green-50 text-green-600' : order.status === 'Denied' ? 'bg-red-50 text-red-600' : 'bg-yellow-50 text-yellow-600'}`}>
+                                  {order.status}
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                    <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">No messages yet</h3>
+                    <p className="text-gray-500">Conversations will appear here when you start a request.</p>
                   </div>
                 )
               ) : activeTab === 'profile' ? (

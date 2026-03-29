@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useCart } from '../CartContext';
 import { useAuth } from '../AuthContext';
-import { ShoppingCart, ArrowLeft, User, Calendar, Tag, Info, BookOpen } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, User, Calendar, Tag, Info, BookOpen, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BookDetails: React.FC = () => {
@@ -119,17 +119,57 @@ const BookDetails: React.FC = () => {
             </p>
           </div>
 
-          <div className="pt-8">
+          <div className="pt-8 flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => {
                 handleAddToCart();
                 navigate('/checkout');
               }}
               disabled={book.status !== 'Available' || (book.quantity || 0) <= 0}
-              className="w-full bg-indigo-600 text-white font-extrabold py-5 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-3 disabled:bg-gray-300 disabled:shadow-none"
+              className="flex-1 bg-indigo-600 text-white font-extrabold py-5 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-3 disabled:bg-gray-300 disabled:shadow-none"
             >
               <ShoppingCart className="w-6 h-6" />
               {book.status === 'Available' && (book.quantity || 1) > 0 ? 'Request to Buy' : 'Sold Out'}
+            </button>
+            
+            <button
+              onClick={async () => {
+                if (!user) {
+                  navigate('/login', { state: { from: { pathname: `/book/${id}` } } });
+                  return;
+                }
+                if (user.id === book.sellerId) {
+                  toast.error("You cannot message yourself!");
+                  return;
+                }
+                
+                try {
+                  // Check if a conversation already exists
+                  const orders = await api.getOrders({ buyerId: user.id });
+                  const existingOrder = orders.find((o: any) => o.bookId === book.id && o.sellerId === book.sellerId);
+                  
+                  if (existingOrder) {
+                    navigate(`/order/${existingOrder.id}`);
+                  } else {
+                    // Create a new inquiry/request
+                    const newOrder = await api.createOrder({
+                      bookId: book.id,
+                      bookTitle: book.title,
+                      sellerId: book.sellerId,
+                      sellerName: book.sellerName,
+                      amount: book.price,
+                      message: "Hi, I'm interested in this book!"
+                    });
+                    navigate(`/order/${newOrder.id}`);
+                  }
+                } catch (error) {
+                  toast.error("Failed to start conversation");
+                }
+              }}
+              className="flex-1 bg-white text-indigo-600 border-2 border-indigo-600 font-extrabold py-5 rounded-2xl hover:bg-indigo-50 transition-all flex items-center justify-center gap-3"
+            >
+              <MessageSquare className="w-6 h-6" />
+              Message Seller
             </button>
           </div>
         </div>

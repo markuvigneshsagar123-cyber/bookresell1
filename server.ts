@@ -135,10 +135,22 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.get('/api/test-bcrypt', async (req, res) => {
+  try {
+    const password = 'testpassword';
+    const hash = await bcrypt.hash(password, 10);
+    const isMatch = await bcrypt.compare(password, hash);
+    res.json({ hash, isMatch });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- AUTH ROUTES ---
 
 app.post('/api/auth/register', async (req, res) => {
-  const { email, password, name } = req.body;
+  const { email: rawEmail, password, name } = req.body;
+  const email = rawEmail.toLowerCase();
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const id = Math.random().toString(36).substr(2, 9);
@@ -158,10 +170,18 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email: rawEmail, password } = req.body;
+  const email = rawEmail.toLowerCase();
   try {
     const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as any;
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user) {
+      console.log(`Login failed: User not found for email ${email}`);
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      console.log(`Login failed: Password mismatch for email ${email}`);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
@@ -175,6 +195,7 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ id: user.id, email: user.email, name: user.displayName, role }, JWT_SECRET);
     res.json({ token, user: { id: user.id, email: user.email, displayName: user.displayName, role, bio: user.bio, location: user.location, photoURL: user.photoURL } });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

@@ -57,12 +57,6 @@ const AppContent: React.FC = () => {
           <Route path="/profile/:id" element={<Profile />} />
         </Routes>
       </main>
-      <footer className="bg-white border-t border-gray-200 py-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-gray-500 font-medium">© 2026 Online Book Reselling System. All rights reserved.</p>
-          <p className="text-gray-400 text-sm mt-2">Built with React, Express, and SQLite.</p>
-        </div>
-      </footer>
       <Toaster position="top-center" richColors />
     </div>
   );

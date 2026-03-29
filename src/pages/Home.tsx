@@ -65,25 +65,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            { icon: <Shield className="w-8 h-8 text-indigo-600" />, title: "Secure Platform", desc: "Verified users and secure transaction tracking for peace of mind." },
-            { icon: <Truck className="w-8 h-8 text-indigo-600" />, title: "Easy Delivery", desc: "Coordinate directly with sellers for local pickup or shipping." },
-            { icon: <Zap className="w-8 h-8 text-indigo-600" />, title: "Instant Listing", desc: "List your book in under a minute with our simple selling flow." }
-          ].map((feature, i) => (
-            <div key={i} className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="bg-indigo-50 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
-                {feature.icon}
-              </div>
-              <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-              <p className="text-gray-600">{feature.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Recent Listings */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-end mb-8">
