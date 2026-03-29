@@ -140,7 +140,7 @@ const OrderDetails: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{isSeller ? 'Buyer' : 'Seller'}</p>
-                  <p className="font-bold text-gray-900">{isSeller ? order.buyerName : 'Seller'}</p>
+                  <p className="font-bold text-gray-900">{isSeller ? order.buyerName : (order.sellerName || 'Seller')}</p>
                 </div>
               </Link>
               <div className="pt-4 border-t border-gray-50">
@@ -189,11 +189,11 @@ const OrderDetails: React.FC = () => {
         <div className="lg:col-span-2 flex flex-col h-[600px] bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-50 flex items-center gap-3">
             <Link to={`/profile/${isSeller ? order.buyerId : order.sellerId}`} className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold hover:bg-indigo-700 transition-colors">
-              {isSeller ? order.buyerName?.[0] : 'S'}
+              {isSeller ? (order.buyerName?.[0] || 'B') : (order.sellerName?.[0] || 'S')}
             </Link>
             <div>
               <Link to={`/profile/${isSeller ? order.buyerId : order.sellerId}`} className="font-bold text-gray-900 hover:text-indigo-600 transition-colors block">
-                Chat with {isSeller ? order.buyerName : 'Seller'}
+                Chat with {isSeller ? order.buyerName : (order.sellerName || 'Seller')}
               </Link>
               <p className="text-xs text-green-500 font-bold flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>

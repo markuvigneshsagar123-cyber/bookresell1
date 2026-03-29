@@ -48,7 +48,8 @@ const BookDetails: React.FC = () => {
       title: book.title,
       price: book.price,
       imageUrl: book.imageUrl,
-      sellerId: book.sellerId
+      sellerId: book.sellerId,
+      sellerName: book.sellerName
     });
     toast.success('Added to cart!');
   };

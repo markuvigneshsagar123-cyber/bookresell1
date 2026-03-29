@@ -281,7 +281,11 @@ const Dashboard: React.FC = () => {
                       <div className="flex justify-between items-center">
                         <div>
                           <h4 className="font-bold text-gray-900">{order.bookTitle}</h4>
-                          <p className="text-sm text-gray-500">Click to chat with seller</p>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <span>Seller: {order.sellerName || 'Verified Seller'}</span>
+                            <span>•</span>
+                            <span className="group-hover:text-indigo-600 transition-colors">Click to chat</span>
+                          </div>
                         </div>
                         <span className="text-xl font-bold text-gray-900">₹{order.amount}</span>
                       </div>
@@ -361,7 +365,9 @@ const Dashboard: React.FC = () => {
                             <UserIcon className="w-5 h-5 text-indigo-600" />
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500">From: {order.buyerName}</p>
+                            <p className="text-sm text-gray-500">
+                              From: <span className="font-bold text-indigo-600 hover:underline">{order.buyerName}</span>
+                            </p>
                             <p className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</p>
                           </div>
                         </div>

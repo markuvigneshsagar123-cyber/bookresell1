@@ -53,6 +53,7 @@ db.exec(`
     bookId TEXT,
     bookTitle TEXT,
     sellerId TEXT,
+    sellerName TEXT,
     amount REAL,
     status TEXT DEFAULT 'Requested',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -267,7 +268,7 @@ app.post('/api/books', upload.single('image'), (req, res) => {
 // --- ORDER & REQUEST ROUTES ---
 
 app.post('/api/orders', (req, res) => {
-  const { buyerId, buyerName, bookId, bookTitle, sellerId, amount } = req.body;
+  const { buyerId, buyerName, bookId, bookTitle, sellerId, sellerName, amount } = req.body;
   const id = Math.random().toString(36).substr(2, 9);
   
   if (!buyerId || !bookId || !sellerId) {
@@ -283,10 +284,10 @@ app.post('/api/orders', (req, res) => {
 
   try {
     const stmt = db.prepare(`
-      INSERT INTO orders (id, buyerId, buyerName, bookId, bookTitle, sellerId, amount, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'Requested')
+      INSERT INTO orders (id, buyerId, buyerName, bookId, bookTitle, sellerId, sellerName, amount, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Requested')
     `);
-    stmt.run(id, buyerId, buyerName, bookId, bookTitle, sellerId, orderAmount);
+    stmt.run(id, buyerId, buyerName, bookId, bookTitle, sellerId, sellerName || 'Verified Seller', orderAmount);
     
     res.json({ id, status: 'Requested' });
   } catch (error) {

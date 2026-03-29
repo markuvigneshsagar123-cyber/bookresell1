@@ -28,6 +28,7 @@ const Checkout: React.FC = () => {
           bookId: item.id,
           bookTitle: item.title || 'Unknown Book',
           sellerId: item.sellerId,
+          sellerName: item.sellerName || 'Verified Seller',
           amount: item.price
         });
 

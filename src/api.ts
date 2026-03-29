@@ -1,4 +1,5 @@
-const API_URL = ''; // Relative to the same origin
+/// <reference types="vite/client" />
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 export interface User {
   id: string;
@@ -38,6 +39,27 @@ export interface Order {
   createdAt: string;
 }
 
+async function handleResponse(res: Response) {
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || `Request failed with status ${res.status}`);
+    }
+    return data;
+  } else {
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(text || `Request failed with status ${res.status}`);
+    }
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return text;
+    }
+  }
+}
+
 export const api = {
   // Auth
   async register(data: any) {
@@ -46,8 +68,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error((await res.json()).message);
-    const result = await res.json();
+    const result = await handleResponse(res);
     localStorage.setItem('token', result.token);
     localStorage.setItem('user', JSON.stringify(result.user));
     return result;
@@ -59,8 +80,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error((await res.json()).message);
-    const result = await res.json();
+    const result = await handleResponse(res);
     localStorage.setItem('token', result.token);
     localStorage.setItem('user', JSON.stringify(result.user));
     return result;
@@ -80,14 +100,12 @@ export const api = {
   async getBooks(params: any = {}) {
     const query = new URLSearchParams(params).toString();
     const res = await fetch(`${API_URL}/api/books?${query}`);
-    if (!res.ok) throw new Error('Failed to fetch books');
-    return res.json();
+    return handleResponse(res);
   },
 
   async getBook(id: string) {
     const res = await fetch(`${API_URL}/api/books/${id}`);
-    if (!res.ok) throw new Error('Book not found');
-    return res.json();
+    return handleResponse(res);
   },
 
   async addBook(formData: FormData) {
@@ -95,16 +113,7 @@ export const api = {
       method: 'POST',
       body: formData,
     });
-    
-    let result;
-    try {
-      result = await res.json();
-    } catch (e) {
-      throw new Error('Server returned an invalid response. Please check if the server is running correctly.');
-    }
-
-    if (!res.ok) throw new Error(result.message || 'Failed to add book');
-    return result;
+    return handleResponse(res);
   },
 
   // Orders
@@ -114,21 +123,18 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to create request');
-    return res.json();
+    return handleResponse(res);
   },
 
   async getOrders(params: { buyerId?: string; sellerId?: string } = {}) {
     const query = new URLSearchParams(params as any).toString();
     const res = await fetch(`${API_URL}/api/orders?${query}`);
-    if (!res.ok) throw new Error('Failed to fetch requests');
-    return res.json();
+    return handleResponse(res);
   },
 
   async getOrder(id: string) {
     const res = await fetch(`${API_URL}/api/orders/${id}`);
-    if (!res.ok) throw new Error('Request not found');
-    return res.json();
+    return handleResponse(res);
   },
 
   async updateOrderStatus(id: string, status: string) {
@@ -137,15 +143,13 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
-    if (!res.ok) throw new Error('Failed to update status');
-    return res.json();
+    return handleResponse(res);
   },
 
   // Users
   async getUser(id: string) {
     const res = await fetch(`${API_URL}/api/users/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch user');
-    return res.json();
+    return handleResponse(res);
   },
 
   async updateProfile(data: Partial<User>) {
@@ -154,15 +158,13 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to update profile');
-    return res.json();
+    return handleResponse(res);
   },
 
   // Messages
   async getMessages(orderId: string) {
     const res = await fetch(`${API_URL}/api/messages/${orderId}`);
-    if (!res.ok) throw new Error('Failed to fetch messages');
-    return res.json();
+    return handleResponse(res);
   },
 
   async sendMessage(data: { orderId: string; senderId: string; text: string }) {
@@ -171,7 +173,6 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to send message');
-    return res.json();
+    return handleResponse(res);
   }
 };
