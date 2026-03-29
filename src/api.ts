@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname.includes('netlify.app') ? 'https://ais-dev-zx6hr32emaba4cuxxnb5xb-197161900533.asia-east1.run.app' : '');
 
 export interface User {
   id: string;
