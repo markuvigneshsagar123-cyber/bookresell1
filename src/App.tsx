@@ -12,6 +12,7 @@ import BookDetails from './pages/BookDetails';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderDetails from './pages/OrderDetails';
+import Profile from './pages/Profile';
 import { Toaster } from 'sonner';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -53,6 +54,7 @@ const AppContent: React.FC = () => {
               <OrderDetails />
             </ProtectedRoute>
           } />
+          <Route path="/profile/:id" element={<Profile />} />
         </Routes>
       </main>
       <footer className="bg-white border-t border-gray-200 py-12">

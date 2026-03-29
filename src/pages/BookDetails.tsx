@@ -88,7 +88,7 @@ const BookDetails: React.FC = () => {
           <div className="text-5xl font-black text-indigo-600">₹{book.price}</div>
 
           <div className="grid grid-cols-2 gap-6 py-8 border-y border-gray-100">
-            <div className="flex items-center gap-3">
+            <Link to={`/profile/${book.sellerId}`} className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-xl transition-colors">
               <div className="bg-indigo-50 p-3 rounded-xl">
                 <User className="w-6 h-6 text-indigo-600" />
               </div>
@@ -96,7 +96,7 @@ const BookDetails: React.FC = () => {
                 <p className="text-xs text-gray-400 font-bold uppercase">Seller</p>
                 <p className="font-bold text-gray-800">{book.sellerName || 'Verified Seller'}</p>
               </div>
-            </div>
+            </Link>
             <div className="flex items-center gap-3">
               <div className="bg-indigo-50 p-3 rounded-xl">
                 <BookOpen className="w-6 h-6 text-indigo-600" />

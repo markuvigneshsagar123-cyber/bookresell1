@@ -7,6 +7,7 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (data: any) => Promise<void>;
   register: (data: any) => Promise<void>;
+  updateUser: (user: User) => void;
   logout: () => void;
 }
 
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   login: async () => {},
   register: async () => {},
+  updateUser: () => {},
   logout: () => {},
 });
 
@@ -41,6 +43,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(result.user);
   };
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    // Also update localStorage
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      const data = JSON.parse(stored);
+      localStorage.setItem('user', JSON.stringify({ ...data, ...updatedUser }));
+    }
+  };
+
   const logout = () => {
     api.logout();
     setUser(null);
@@ -49,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAdmin = user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

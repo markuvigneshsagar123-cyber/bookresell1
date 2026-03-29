@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { api } from '../api';
 import { ArrowLeft, Send, Loader2, CheckCircle, XCircle, MessageSquare, User, Clock } from 'lucide-react';
@@ -134,7 +134,7 @@ const OrderDetails: React.FC = () => {
                   <p className="font-bold text-gray-900">{order.bookTitle}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <Link to={`/profile/${isSeller ? order.buyerId : order.sellerId}`} className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-xl transition-colors">
                 <div className="bg-indigo-50 p-2 rounded-lg">
                   <User className="w-5 h-5 text-indigo-600" />
                 </div>
@@ -142,7 +142,7 @@ const OrderDetails: React.FC = () => {
                   <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{isSeller ? 'Buyer' : 'Seller'}</p>
                   <p className="font-bold text-gray-900">{isSeller ? order.buyerName : 'Seller'}</p>
                 </div>
-              </div>
+              </Link>
               <div className="pt-4 border-t border-gray-50">
                 <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Amount</p>
                 <p className="text-2xl font-black text-indigo-600">₹{order.amount}</p>
@@ -188,11 +188,13 @@ const OrderDetails: React.FC = () => {
         {/* Chat */}
         <div className="lg:col-span-2 flex flex-col h-[600px] bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-50 flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
+            <Link to={`/profile/${isSeller ? order.buyerId : order.sellerId}`} className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold hover:bg-indigo-700 transition-colors">
               {isSeller ? order.buyerName?.[0] : 'S'}
-            </div>
+            </Link>
             <div>
-              <h3 className="font-bold text-gray-900">Chat with {isSeller ? order.buyerName : 'Seller'}</h3>
+              <Link to={`/profile/${isSeller ? order.buyerId : order.sellerId}`} className="font-bold text-gray-900 hover:text-indigo-600 transition-colors block">
+                Chat with {isSeller ? order.buyerName : 'Seller'}
+              </Link>
               <p className="text-xs text-green-500 font-bold flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                 Online

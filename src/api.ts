@@ -6,6 +6,8 @@ export interface User {
   displayName: string;
   role: string;
   photoURL?: string;
+  bio?: string;
+  location?: string;
 }
 
 export interface Book {
@@ -78,6 +80,7 @@ export const api = {
   async getBooks(params: any = {}) {
     const query = new URLSearchParams(params).toString();
     const res = await fetch(`${API_URL}/api/books?${query}`);
+    if (!res.ok) throw new Error('Failed to fetch books');
     return res.json();
   },
 
@@ -118,6 +121,7 @@ export const api = {
   async getOrders(params: { buyerId?: string; sellerId?: string } = {}) {
     const query = new URLSearchParams(params as any).toString();
     const res = await fetch(`${API_URL}/api/orders?${query}`);
+    if (!res.ok) throw new Error('Failed to fetch requests');
     return res.json();
   },
 
@@ -137,9 +141,27 @@ export const api = {
     return res.json();
   },
 
+  // Users
+  async getUser(id: string) {
+    const res = await fetch(`${API_URL}/api/users/${id}`);
+    if (!res.ok) throw new Error('Failed to fetch user');
+    return res.json();
+  },
+
+  async updateProfile(data: Partial<User>) {
+    const res = await fetch(`${API_URL}/api/users/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update profile');
+    return res.json();
+  },
+
   // Messages
   async getMessages(orderId: string) {
     const res = await fetch(`${API_URL}/api/messages/${orderId}`);
+    if (!res.ok) throw new Error('Failed to fetch messages');
     return res.json();
   },
 

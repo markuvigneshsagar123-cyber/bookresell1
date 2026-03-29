@@ -7,37 +7,54 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const Dashboard: React.FC = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, updateUser } = useAuth();
   const [myBooks, setMyBooks] = useState<any[]>([]);
   const [sentRequests, setSentRequests] = useState<any[]>([]);
   const [receivedRequests, setReceivedRequests] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'listings' | 'sent' | 'received'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'sent' | 'received' | 'profile'>('listings');
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
+  const [profileData, setProfileData] = useState({
+    displayName: user?.displayName || '',
+    bio: user?.bio || '',
+    location: user?.location || '',
+    photoURL: user?.photoURL || ''
+  });
+  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
+    if (user) {
+      setProfileData({
+        displayName: user.displayName,
+        bio: user.bio || '',
+        location: user.location || '',
+        photoURL: user.photoURL || ''
+      });
+    }
+  }, [user]);
+
+  const fetchData = async () => {
     if (!user) return;
+    setLoading(true);
+    try {
+      // Fetch my listings
+      const books = await api.getBooks({ sellerId: user.id });
+      setMyBooks(books);
 
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // Fetch my listings
-        const books = await api.getBooks({ sellerId: user.id });
-        setMyBooks(books);
+      // Fetch requests sent by me
+      const sent = await api.getOrders({ buyerId: user.id });
+      setSentRequests(sent);
 
-        // Fetch requests sent by me
-        const sent = await api.getOrders({ buyerId: user.id });
-        setSentRequests(sent);
+      // Fetch requests received by me
+      const received = await api.getOrders({ sellerId: user.id });
+      setReceivedRequests(received);
+    } catch (error) {
+      console.error("Error fetching dashboard data", error);
+    }
+    setLoading(false);
+  };
 
-        // Fetch requests received by me
-        const received = await api.getOrders({ sellerId: user.id });
-        setReceivedRequests(received);
-      } catch (error) {
-        console.error("Error fetching dashboard data", error);
-      }
-      setLoading(false);
-    };
-
+  useEffect(() => {
     fetchData();
   }, [user]);
 
@@ -56,7 +73,8 @@ const Dashboard: React.FC = () => {
           imageUrl: "https://picsum.photos/seed/gatsby/400/600",
           sellerId: user.id,
           sellerName: user.displayName,
-          status: "Available"
+          status: "Available",
+          quantity: 5
         },
         {
           title: "Atomic Habits",
@@ -68,7 +86,8 @@ const Dashboard: React.FC = () => {
           imageUrl: "https://picsum.photos/seed/habits/400/600",
           sellerId: user.id,
           sellerName: user.displayName,
-          status: "Available"
+          status: "Available",
+          quantity: 3
         },
         {
           title: "A Brief History of Time",
@@ -80,7 +99,8 @@ const Dashboard: React.FC = () => {
           imageUrl: "https://picsum.photos/seed/hawking/400/600",
           sellerId: user.id,
           sellerName: user.displayName,
-          status: "Available"
+          status: "Available",
+          quantity: 2
         }
       ];
 
@@ -90,12 +110,26 @@ const Dashboard: React.FC = () => {
         await api.addBook(formData);
       }
       toast.success('Sample books added successfully!');
-      window.location.reload();
+      await fetchData();
     } catch (error) {
       console.error("Error seeding data", error);
       toast.error('Failed to seed sample data');
     }
     setSeeding(false);
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setSavingProfile(true);
+    try {
+      const updated = await api.updateProfile({ id: user.id, ...profileData });
+      updateUser(updated);
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      toast.error('Failed to update profile');
+    }
+    setSavingProfile(false);
   };
 
   if (!user) return null;
@@ -111,9 +145,15 @@ const Dashboard: React.FC = () => {
             </div>
             <h2 className="text-xl font-bold text-gray-900">{user.displayName}</h2>
             <p className="text-gray-500 text-sm mb-6">{user.email}</p>
-            <div className="inline-block bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+            <div className="inline-block bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4">
               {user.role || 'User'}
             </div>
+            <Link 
+              to={`/profile/${user.id}`}
+              className="block text-indigo-600 text-sm font-bold hover:underline"
+            >
+              View Public Profile
+            </Link>
           </div>
 
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
@@ -138,9 +178,12 @@ const Dashboard: React.FC = () => {
               <Package className="w-5 h-5" />
               Requests Received ({receivedRequests.length})
             </button>
-            <button className="w-full flex items-center gap-3 px-6 py-4 text-left font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => setActiveTab('profile')}
+              className={`w-full flex items-center gap-3 px-6 py-4 text-left font-bold transition-colors ${activeTab === 'profile' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
               <Settings className="w-5 h-5" />
-              Settings
+              Profile Settings
             </button>
           </div>
 
@@ -165,7 +208,7 @@ const Dashboard: React.FC = () => {
         <div className="lg:col-span-3">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-extrabold text-gray-900">
-              {activeTab === 'listings' ? 'My Listings' : activeTab === 'sent' ? 'My Requests' : 'Requests Received'}
+              {activeTab === 'listings' ? 'My Listings' : activeTab === 'sent' ? 'My Requests' : activeTab === 'received' ? 'Requests Received' : 'Profile Settings'}
             </h1>
             {activeTab === 'listings' && (
               <Link to="/add-book" className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors">
@@ -254,6 +297,60 @@ const Dashboard: React.FC = () => {
                     </Link>
                   </div>
                 )
+              ) : activeTab === 'profile' ? (
+                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                  <form onSubmit={handleUpdateProfile} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Display Name</label>
+                        <input 
+                          type="text"
+                          value={profileData.displayName}
+                          onChange={(e) => setProfileData({...profileData, displayName: e.target.value})}
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Location</label>
+                        <input 
+                          type="text"
+                          value={profileData.location}
+                          onChange={(e) => setProfileData({...profileData, location: e.target.value})}
+                          placeholder="e.g. Mumbai, India"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Bio</label>
+                      <textarea 
+                        rows={4}
+                        value={profileData.bio}
+                        onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                        placeholder="Tell others about yourself..."
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Profile Photo URL</label>
+                      <input 
+                        type="url"
+                        value={profileData.photoURL}
+                        onChange={(e) => setProfileData({...profileData, photoURL: e.target.value})}
+                        placeholder="https://example.com/photo.jpg"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+                    <button 
+                      type="submit"
+                      disabled={savingProfile}
+                      className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                    >
+                      {savingProfile ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </form>
+                </div>
               ) : (
                 receivedRequests.length > 0 ? receivedRequests.map(order => (
                   <Link key={order.id} to={`/order/${order.id}`} className="block group">
