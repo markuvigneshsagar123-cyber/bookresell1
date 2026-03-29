@@ -130,6 +130,11 @@ const upload = multer({
 // Serve static uploads
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 // --- AUTH ROUTES ---
 
 app.post('/api/auth/register', async (req, res) => {
