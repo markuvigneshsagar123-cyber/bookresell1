@@ -1,0 +1,5 @@
+{
+  "name": "Online Book Reselling System",
+  "description": "A full-stack e-commerce platform for buying and selling second-hand books with secure authentication and order management.",
+  "requestFramePermissions": []
+}
