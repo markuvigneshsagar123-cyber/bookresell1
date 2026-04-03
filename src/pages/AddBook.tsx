@@ -16,7 +16,7 @@ const AddBook: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
-    author: '',
+    publisherName: '',
     price: '',
     category: 'Fiction',
     condition: 'Good',
@@ -58,7 +58,7 @@ const AddBook: React.FC = () => {
     try {
       const data = new FormData();
       data.append('title', formData.title);
-      data.append('author', formData.author);
+      data.append('publisherName', formData.publisherName);
       data.append('price', formData.price);
       data.append('category', formData.category);
       data.append('condition', formData.condition);
@@ -111,14 +111,14 @@ const AddBook: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Author</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Publisher Name</label>
                 <input
                   required
                   type="text"
-                  name="author"
-                  value={formData.author}
+                  name="publisherName"
+                  value={formData.publisherName}
                   onChange={handleChange}
-                  placeholder="e.g. F. Scott Fitzgerald"
+                  placeholder="e.g. Penguin Books"
                   className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
                 />
               </div>

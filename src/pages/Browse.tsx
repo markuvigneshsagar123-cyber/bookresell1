@@ -141,7 +141,7 @@ const Browse: React.FC = () => {
                     </div>
                     <div className="p-6 flex-1 flex flex-col">
                       <h3 className="font-bold text-xl text-gray-900 line-clamp-1 mb-1">{book.title}</h3>
-                      <p className="text-sm text-gray-500 mb-4">{book.author}</p>
+                      <p className="text-sm text-gray-500 mb-4">{book.publisherName}</p>
                       <div className="mt-auto flex justify-between items-center">
                         <span className="text-2xl font-extrabold text-indigo-600">₹{book.price}</span>
                         <span className="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-wider">

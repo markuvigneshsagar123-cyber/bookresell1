@@ -83,7 +83,7 @@ const BookDetails: React.FC = () => {
               <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">{book.condition}</span>
             </div>
             <h1 className="text-4xl font-extrabold text-gray-900 mb-2">{book.title}</h1>
-            <p className="text-2xl text-gray-500 font-medium">by {book.author}</p>
+            <p className="text-2xl text-gray-500 font-medium">by {book.publisherName}</p>
           </div>
 
           <div className="text-5xl font-black text-indigo-600">₹{book.price}</div>

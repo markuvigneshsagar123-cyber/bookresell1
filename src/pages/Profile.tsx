@@ -119,7 +119,7 @@ const Profile: React.FC = () => {
                         </div>
                         <div className="ml-3 overflow-hidden">
                           <p className="font-medium text-gray-900 truncate">{book.title}</p>
-                          <p className="text-sm text-gray-500 truncate">{book.author}</p>
+                          <p className="text-sm text-gray-500 truncate">{book.publisherName}</p>
                           <p className="text-sm font-semibold text-indigo-600 mt-0.5">₹{book.price}</p>
                         </div>
                       </Link>

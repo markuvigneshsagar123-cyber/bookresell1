@@ -5,6 +5,7 @@ import { api } from '../api';
 import { ArrowLeft, Send, Loader2, CheckCircle, XCircle, MessageSquare, User, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { io, Socket } from 'socket.io-client';
 
 const OrderDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,7 @@ const OrderDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -39,8 +41,27 @@ const OrderDetails: React.FC = () => {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 5000); // Poll for new messages
-    return () => clearInterval(interval);
+
+    // Initialize socket
+    const newSocket = io(window.location.origin);
+    setSocket(newSocket);
+
+    newSocket.on('connect', () => {
+      console.log('Connected to socket');
+      newSocket.emit('join_room', id);
+    });
+
+    newSocket.on('receive_message', (message) => {
+      setMessages((prev) => {
+        // Check if message already exists to avoid duplicates
+        if (prev.some(m => m.id === message.id)) return prev;
+        return [...prev, message];
+      });
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
   }, [id, user]);
 
   useEffect(() => {

@@ -14,7 +14,7 @@ export interface User {
 export interface Book {
   id: string;
   title: string;
-  author: string;
+  publisherName: string;
   price: number;
   category: string;
   condition: string;

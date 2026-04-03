@@ -65,7 +65,7 @@ const Dashboard: React.FC = () => {
       const sampleBooks = [
         {
           title: "The Great Gatsby",
-          author: "F. Scott Fitzgerald",
+          publisherName: "F. Scott Fitzgerald",
           price: 299,
           condition: "Like New",
           category: "Fiction",
@@ -78,7 +78,7 @@ const Dashboard: React.FC = () => {
         },
         {
           title: "Atomic Habits",
-          author: "James Clear",
+          publisherName: "James Clear",
           price: 450,
           condition: "New",
           category: "Self-Help",
@@ -91,7 +91,7 @@ const Dashboard: React.FC = () => {
         },
         {
           title: "A Brief History of Time",
-          author: "Stephen Hawking",
+          publisherName: "Stephen Hawking",
           price: 350,
           condition: "Good",
           category: "Non-Fiction",
@@ -245,7 +245,7 @@ const Dashboard: React.FC = () => {
                           {book.status}
                         </span>
                       </div>
-                      <p className="text-gray-500 mb-4">{book.author} • {book.category} • {book.quantity || 1} in stock</p>
+                      <p className="text-gray-500 mb-4">{book.publisherName} • {book.category} • {book.quantity || 1} in stock</p>
                       <div className="flex items-center justify-between">
                         <span className="text-2xl font-bold text-indigo-600">₹{book.price}</span>
                         <div className="flex gap-2">
@@ -326,7 +326,7 @@ const Dashboard: React.FC = () => {
                                 <div>
                                   <h4 className="font-bold text-gray-900">Chat with {otherPartyName}</h4>
                                   <p className="text-sm text-gray-500 truncate max-w-[200px] md:max-w-md">
-                                    Re: {order.bookTitle}
+                                    {order.lastMessage ? order.lastMessage.text : `Re: ${order.bookTitle}`}
                                   </p>
                                 </div>
                               </div>

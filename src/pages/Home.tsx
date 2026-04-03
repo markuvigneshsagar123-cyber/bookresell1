@@ -106,7 +106,7 @@ const Home: React.FC = () => {
                   </div>
                   <div className="p-4">
                     <h3 className="font-bold text-gray-900 truncate mb-1">{book.title}</h3>
-                    <p className="text-sm text-gray-500 mb-3">{book.author}</p>
+                    <p className="text-sm text-gray-500 mb-3">{book.publisherName}</p>
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold text-indigo-600">₹{book.price}</span>
                       <span className="text-xs text-gray-400 uppercase tracking-wider font-bold">{book.category}</span>

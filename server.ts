@@ -8,6 +8,8 @@ import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import fs from 'fs';
 import cors from 'cors';
+import { Server } from 'socket.io';
+import http from 'http';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,7 +34,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS books (
     id TEXT PRIMARY KEY,
     title TEXT,
-    author TEXT,
+    publisherName TEXT,
     price REAL,
     category TEXT,
     condition TEXT,
@@ -84,6 +86,11 @@ if (!columns.includes('bookTitle')) {
 
 const bookTableInfo = db.prepare("PRAGMA table_info(books)").all();
 const bookColumns = bookTableInfo.map((c: any) => c.name);
+if (bookColumns.includes('author') && !bookColumns.includes('publisherName')) {
+  try { db.exec('ALTER TABLE books RENAME COLUMN author TO publisherName'); } catch (e) { console.error('Migration error (rename author):', e); }
+} else if (!bookColumns.includes('publisherName')) {
+  try { db.exec('ALTER TABLE books ADD COLUMN publisherName TEXT'); } catch (e) { console.error('Migration error (publisherName):', e); }
+}
 if (!bookColumns.includes('quantity')) {
   try { db.exec('ALTER TABLE books ADD COLUMN quantity INTEGER DEFAULT 1'); } catch (e) { console.error('Migration error (quantity):', e); }
 }
@@ -152,6 +159,13 @@ app.post('/api/auth/register', async (req, res) => {
   const { email: rawEmail, password, name } = req.body;
   const email = rawEmail.toLowerCase();
   try {
+    // Check if user already exists
+    const existingUser = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    if (existingUser) {
+      console.log(`Registration failed: Email ${email} already exists`);
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const id = Math.random().toString(36).substr(2, 9);
     const role = email === 'vigneshsagar666@gmail.com' ? 'admin' : 'user';
@@ -162,9 +176,7 @@ app.post('/api/auth/register', async (req, res) => {
     const token = jwt.sign({ id, email, name, role }, JWT_SECRET);
     res.json({ token, user: { id, email, displayName: name, role } });
   } catch (error: any) {
-    if (error.code === 'SQLITE_CONSTRAINT') {
-      return res.status(400).json({ message: 'Email already exists' });
-    }
+    console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -238,7 +250,7 @@ app.get('/api/books', (req, res) => {
   const params: any[] = [];
 
   if (q) {
-    sql += ' AND (title LIKE ? OR author LIKE ?)';
+    sql += ' AND (title LIKE ? OR publisherName LIKE ?)';
     params.push(`%${q}%`, `%${q}%`);
   }
   if (category && category !== 'All') {
@@ -274,16 +286,16 @@ app.get('/api/books/:id', (req, res) => {
 });
 
 app.post('/api/books', upload.single('image'), (req, res) => {
-  const { title, author, price, category, condition, description, sellerId, sellerName, quantity, imageUrl: bodyImageUrl } = req.body;
+  const { title, publisherName, price, category, condition, description, sellerId, sellerName, quantity, imageUrl: bodyImageUrl } = req.body;
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : bodyImageUrl || null;
   const id = Math.random().toString(36).substr(2, 9);
 
   try {
     const stmt = db.prepare(`
-      INSERT INTO books (id, title, author, price, category, condition, description, imageUrl, sellerId, sellerName, quantity)
+      INSERT INTO books (id, title, publisherName, price, category, condition, description, imageUrl, sellerId, sellerName, quantity)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    stmt.run(id, title, author, Number(price), category, condition, description, imageUrl, sellerId, sellerName, Number(quantity || 1));
+    stmt.run(id, title, publisherName, Number(price), category, condition, description, imageUrl, sellerId, sellerName, Number(quantity || 1));
     res.json({ id, title, imageUrl });
   } catch (error) {
     console.error('Error adding book:', error);
@@ -337,8 +349,15 @@ app.get('/api/orders', (req, res) => {
   }
 
   sql += ' ORDER BY createdAt DESC';
-  const orders = db.prepare(sql).all(...params);
-  res.json(orders);
+  const orders = db.prepare(sql).all(...params) as any[];
+  
+  // For each order, get the last message
+  const ordersWithLastMessage = orders.map(order => {
+    const lastMessage = db.prepare('SELECT text, createdAt FROM messages WHERE orderId = ? ORDER BY createdAt DESC LIMIT 1').get(order.id) as any;
+    return { ...order, lastMessage };
+  });
+  
+  res.json(ordersWithLastMessage);
 });
 
 app.get('/api/orders/:id', (req, res) => {
@@ -385,12 +404,24 @@ app.post('/api/messages', (req, res) => {
   const id = Math.random().toString(36).substr(2, 9);
   try {
     db.prepare('INSERT INTO messages (id, orderId, senderId, text) VALUES (?, ?, ?, ?)').run(id, orderId, senderId, text);
-    res.json({ id, orderId, senderId, text, createdAt: new Date().toISOString() });
+    const message = { id, orderId, senderId, text, createdAt: new Date().toISOString() };
+    
+    // Broadcast message via socket if io is initialized
+    if (global.io) {
+      global.io.to(orderId).emit('receive_message', message);
+    }
+    
+    res.json(message);
   } catch (error) {
     console.error('Error sending message:', error);
     res.status(500).json({ message: 'Error sending message' });
   }
 });
+
+// Declare global io for access in routes
+declare global {
+  var io: Server;
+}
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -404,6 +435,29 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // --- VITE INTEGRATION ---
 
 async function startServer() {
+  const httpServer = http.createServer(app);
+  const io = new Server(httpServer, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
+
+  global.io = io;
+
+  io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+
+    socket.on('join_room', (orderId) => {
+      socket.join(orderId);
+      console.log(`User ${socket.id} joined room ${orderId}`);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('User disconnected:', socket.id);
+    });
+  });
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -419,7 +473,7 @@ async function startServer() {
   }
 
   const PORT = 3000;
-  app.listen(PORT, '0.0.0.0', () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
